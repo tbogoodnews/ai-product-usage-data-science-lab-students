@@ -1,0 +1,6 @@
+host,multiplier,basis
+AWS,0.7,fictional API list cost multiplier
+Anthropic,0.7,fictional API list cost multiplier
+Azure,0.6,fictional API list cost multiplier
+OpenAI,0.7,fictional API list cost multiplier
+GCP,0.7,fictional API list cost multiplier

@@ -1,0 +1,6 @@
+sku,period,token_cap,included_aic,overage_aic,source
+free,month,250000.0,,0,illustrative
+student,month,,1500.0,0,illustrative
+pro_trial,lifetime,,1500.0,0,https://docs.github.com/en/copilot/concepts/billing-and-usage/individuals/billing
+pro,month,,1500.0,300,https://docs.github.com/en/copilot/concepts/billing-and-usage/individuals/billing
+business,month,,1900.0,300,https://docs.github.com/en/copilot/get-started/plans

@@ -1,0 +1,7 @@
+business_id,timezone,region,weekmask,working_start,working_end
+B00,America/Los_Angeles,US,Mon Tue Wed Thu Fri,9,17
+B01,America/New_York,US,Mon Tue Wed Thu Fri,9,17
+B02,America/Toronto,CA,Mon Tue Wed Thu Fri,9,17
+B03,Europe/London,GB,Mon Tue Wed Thu Fri,9,17
+B04,Asia/Kolkata,IN,Mon Tue Wed Thu Fri,9,17
+B05,Asia/Tokyo,JP,Mon Tue Wed Thu Fri,9,17
