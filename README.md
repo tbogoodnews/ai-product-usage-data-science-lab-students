@@ -9,6 +9,6 @@
 The notebook loads the CSVs directly from GitHub. No download or installation is needed.
 The links work once this repository and its data are public.
 
-Explore joins, pricing, survival, trial cycling, activity, market baskets, switching, forecasting, and enterprise analysis. Use the [techniques guide](guide/techniques-guide.pdf) for explanations and visual examples.
+Explore joins, pricing, survival, trial cycling, activity, market baskets, switching, forecasting, enterprise analysis, cache incidents, and cost concentration. Use the [techniques guide](guide/techniques-guide.pdf) for explanations, visual examples, and a data dictionary.
 
 All accounts and behavior are fictional. Pricing assumptions are for teaching, not real bills. See [schema.md](schema.md) for definitions.

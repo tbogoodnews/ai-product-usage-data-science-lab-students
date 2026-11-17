@@ -387,6 +387,77 @@ PAGES = [
             ("Luhn: original BI paper (1958)", "https://doi.org/10.1147/rd.24.0314"),
         ],
     },
+    {
+        "title": "Cache incident detection",
+        "question": "When does an unusual cache drop need a closer look?",
+        "left": [
+            ("The technique", "A cache stores input that can be reused. A <b>cache-read "
+             "rate</b> is cached input tokens divided by all input tokens. Compare the rate "
+             "over time for each provider. A sudden drop may be an incident, but it can "
+             "also reflect a different mix of models or tasks."),
+            ("Why teams monitor", "Control charts help teams notice when a process moves "
+             "away from its usual pattern. They do not prove why it changed. A useful "
+             "alert should focus attention without sending people too many false alarms."),
+            ("Count tokens, not percentages", "Add cache-read tokens and input tokens in "
+             "each time period first. Then divide the sums. Averaging row percentages "
+             "gives a tiny request the same weight as a huge request."),
+        ],
+        "right": [
+            ("A cost example", "For one million input tokens, suppose cached reads cost "
+             "$0.10 per million and ordinary input costs $1.00. With no cache writes, "
+             "a 90% read rate costs $0.19. At 70%, it costs $0.37: an extra $0.18 "
+             "for the same input. Actual costs depend on the price keys and hosts."),
+            ("In the workshop", "Compare time periods and providers, then inspect a drop "
+             "against a baseline. Find which models contributed. A provider-wide rate can "
+             "move when the model mix changes, even if each model's own rate does not."),
+            ("Before calling an incident", "Check time zones, missing data and token volume. "
+             "Small buckets can move a lot by chance. Compare similar traffic and look "
+             "for supporting evidence. A flag starts an investigation, not a verdict."),
+        ],
+        "chart": "incident",
+        "caption": "Example: a lower cache-read share can raise cost for the same input tokens.",
+        "links": [
+            ("Wikipedia: control chart", "https://en.wikipedia.org/wiki/Control_chart"),
+            ("NIST: control charts", "https://www.itl.nist.gov/div898/handbook/pmc/section3/pmc3.htm"),
+            ("pandas: groupby", "https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.groupby.html"),
+        ],
+    },
+    {
+        "title": "Cost concentration",
+        "question": "How unevenly is cost distributed across accounts?",
+        "left": [
+            ("The technique", "Sort accounts from lowest to highest cost. A <b>Lorenz "
+             "curve</b> plots the cumulative share of total cost against the cumulative "
+             "share of accounts. The diagonal shows equal cost per account. A curve "
+             "farther below it means cost is more concentrated."),
+            ("Why it emerged", "Max Lorenz introduced the curve in 1905 to study the "
+             "distribution of wealth. It can describe many quantities today, including "
+             "spending and usage cost. Its shape shows inequality, not its cause."),
+            ("A simple example", "Four accounts cost $1, $1, $2 and $6. The lowest half "
+             "of accounts accounts for $2 of the $10 total, or 20%. The highest-cost "
+             "account alone accounts for 60%."),
+        ],
+        "right": [
+            ("In the workshop", "Choose one plan and month. Sum modeled hosting cost "
+             "per account and sort the accounts. Plot cumulative user share and "
+             "cumulative cost share. Make sure both axes go from 0% to 100%."),
+            ("A second view", "A percentile plot can show each account's dollar cost "
+             "against its position in the sorted accounts. Dollars per account are not "
+             "the cumulative share of dollars. Both views help, but answer different "
+             "questions."),
+            ("Interpret carefully", "Say which accounts qualify, including how you treat "
+             "accounts without usage. Show the plan and month. A concentrated cost does "
+             "not prove a user caused a problem or that an intervention will work. "
+             "Actual customer revenue is not in this data."),
+        ],
+        "chart": "concentration",
+        "caption": "Four invented accounts: the lowest 50% account for 20% of total cost.",
+        "links": [
+            ("Wikipedia: Lorenz curve", "https://en.wikipedia.org/wiki/Lorenz_curve"),
+            ("Lorenz: original paper (1905)", "https://doi.org/10.2307/2276207"),
+            ("CORE Econ: Lorenz curves", "https://books.core-econ.org/doing-economics/book/text/05-02.html"),
+        ],
+    },
 ]
 
 
@@ -611,6 +682,27 @@ def make_chart(kind):
             bx.text(i, value + 2, f"{value}%", ha="center", weight="bold")
         fig.text(.85, .96, "Equal weight for...", ha="center", fontsize=10)
         chart_base(bx)
+    elif kind == "incident":
+        ax = fig.add_axes([.09, .25, .48, .65])
+        ax.plot([1, 2, 3, 4], [90, 90, 70, 90], "o-", color=BLUE, linewidth=2)
+        ax.set(ylim=(50, 100), xticks=[1, 2, 3, 4], xlabel="Time period",
+               ylabel="Cache-read share (%)")
+        chart_base(ax)
+        fig.text(.64, .78, "90% cached: $0.19", fontsize=12)
+        fig.text(.64, .55, "70% cached: $0.37", fontsize=12)
+        fig.text(.64, .30, "Extra cost: $0.18", fontsize=12, weight="bold", color=ORANGE)
+    elif kind == "concentration":
+        ax = fig.add_axes([.11, .26, .48, .66])
+        ax.plot([0, 100], [0, 100], "--", color=INK, label="Equal cost")
+        ax.plot([0, 25, 50, 75, 100], [0, 10, 20, 40, 100],
+                "o-", color=TEAL, label="Actual cost")
+        ax.set(xlim=(0, 100), ylim=(0, 100), xlabel="Cumulative accounts (%)",
+               ylabel="Cumulative cost (%)")
+        ax.legend(frameon=False, loc="upper left")
+        chart_base(ax)
+        fig.text(.68, .75, "Costs: $1, $1, $2, $6", fontsize=11)
+        fig.text(.68, .52, "Lowest 50%: $2", fontsize=11)
+        fig.text(.68, .30, "Share: $2 / $10 = 20%", fontsize=11, color=TEAL, weight="bold")
     else:
         raise ValueError(f"Unknown chart: {kind}")
     output = BytesIO()
@@ -645,7 +737,7 @@ def cover(c):
     y -= 30
     for i, page in enumerate(PAGES, start=1):
         c.setFillColor(colors.HexColor(PALE if i % 2 else "#F7FAFC"))
-        c.roundRect(MARGIN, y - 35, BODY_WIDTH, 43, 5, stroke=0, fill=1)
+        c.roundRect(MARGIN, y - 28, BODY_WIDTH, 36, 5, stroke=0, fill=1)
         c.setFillColor(colors.HexColor(TEAL))
         c.setFont("Helvetica-Bold", 12)
         c.drawString(MARGIN + 12, y - 8, f"{i:02d}")
@@ -654,13 +746,14 @@ def cover(c):
         c.drawString(MARGIN + 46, y - 5, page["title"])
         c.setFont("Helvetica", 10)
         c.drawString(MARGIN + 46, y - 21, page["question"])
-        y -= 48
+        y -= 40
     y = paragraph(c, "<b>Use the links:</b> each topic ends with clickable terms, tutorials or "
                   "original research. Some publisher pages may require access; open archive "
                   "links are included where available.", MARGIN, y - 8, BODY_WIDTH)
     paragraph(c, "<b>Keep evidence honest:</b> the workshop's people, activity and launch stories "
               "are synthetic. Some model names and pricing references come from public sources. "
-              "The small examples in this guide are illustrations, not exercise answers.",
+              "The examples here are illustrations, not exercise answers. The last pages "
+              "explain the notebook's fields.",
               MARGIN, y - 12, BODY_WIDTH)
     footer(c, 1)
     c.showPage()
@@ -707,14 +800,112 @@ def plain_text(page):
     return re.sub("<[^>]+>", "", content)
 
 
+DICTIONARY = [
+    {
+        "title": "Data dictionary: analysis",
+        "intro": "The notebook's compact working table is called analysis. One row is one "
+                 "six-hour usage aggregate for an account, model, route, host and price "
+                 "key, among other grouping fields. Multiple rows can share account and time.",
+        "left": [
+            ("user_id", "Text account ID. Join key to users and subscriptions; one account "
+             "may have many usage or subscription rows."),
+            ("time", "UTC text timestamp for the start of the six-hour usage bucket. "
+             "Convert to a datetime before filtering or grouping by day."),
+            ("region", "Text region of the account, joined from users."),
+            ("user_type", "Text subscription plan or SKU recorded for this usage."),
+            ("model_name", "Text name of the model that actually handled the calls."),
+            ("provider", "Text model provider, such as a model's company."),
+            ("primary_provider", "Text declared provider preference from users. It need "
+             "not match the provider of every actual call."),
+        ],
+        "right": [
+            ("model_call_count", "Whole number of model calls in this usage aggregate. "
+             "One user request can trigger several calls."),
+            ("user_request_count", "Whole number of admitted user requests, also called "
+             "turns, attributed to this aggregate. Count turns, not calls, for the "
+             "old-style per-turn bill."),
+            ("total_input_tokens", "Whole number of input text tokens. Includes cached "
+             "reads and uncached input."),
+            ("aic", "Numeric AI credits consumed. An AIC dollar proxy is not revenue."),
+            ("hosting_cost_usd", "Numeric modeled provider hosting cost in US dollars. "
+             "It is not the customer's bill."),
+            ("business_id", "Text business ID, or missing for an individual account. "
+             "Join to businesses on business_id when studying firms."),
+        ],
+    },
+    {
+        "title": "Data dictionary: extra fields",
+        "intro": "Some sections use a small selection from the raw tables. Times are UTC. "
+                 "IDs and price keys are text; counts and token amounts are whole numbers.",
+        "left": [
+            ("Requests and calls", "user_requests has one row per user action. "
+             "user_request_id joins to model_requests, which has one row per model call; "
+             "request_id identifies that call. status shows admitted or blocked. "
+             "Retries and extra calls are not extra turns."),
+            ("Token components", "cache_read_tokens are reused input tokens. "
+             "cache_write_tokens are a subset of uncached input. "
+             "ordinary_billed_input_tokens exclude writes. output_tokens count generated "
+             "text. Do not count writes twice."),
+            ("Price keys and rates", "api_price_key and copilot_price_key match price_key "
+             "in their respective price tables. input_rate, cache_read_rate, "
+             "cache_write_rate and output_rate are USD per million tokens."),
+            ("bucket and incident_cost", "bucket groups provider and UTC time. "
+             "input_tokens, read_tokens and ordinary_tokens are token counts; "
+             "observed_hosting_usd is modeled USD. read_rate and baseline_rate "
+             "are fractions, drop is their difference, and flag is true or false. "
+             "incident_cost adds estimated_saving_usd: hypothetical savings in USD."),
+        ],
+        "right": [
+            ("Cache investigation", "Use usage time, provider, host, price key, token "
+             "components and hosting_cost_usd. Add read tokens and input tokens before "
+             "dividing; the result is a share, not a dollar cost."),
+            ("Subscriptions", "subscriptions contains user_id, sku, valid_from and "
+             "valid_to. Each row is one plan interval. It includes valid_from and excludes "
+             "valid_to. Match account and time when finding an eligible plan."),
+            ("Cost concentration", "For a selected plan and month, combine eligible "
+             "subscriptions with usage time, user_type, user_id and hosting_cost_usd. "
+             "Include eligible zero-usage accounts where the exercise asks for them."),
+            ("cost_accounts", "One row per eligible account. user_id is its account key; "
+             "cost_usd is modeled hosting dollars. user_share and cost_share are "
+             "cumulative fractions, not dollars per account."),
+            ("More detail", "The complete " + link("student schema", "https://github.com/tbogoodnews/ai-product-usage-data-science-lab-students/blob/main/schema.md")
+             + " describes every table and its units. Public model names and price "
+             "references are not simulated customer records."),
+        ],
+    },
+]
+
+
+def dictionary_page(c, page, number):
+    c.setFillColor(colors.HexColor(TEAL))
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(MARGIN, 752, "WORKSHOP FIELD GUIDE  /  DATA DICTIONARY")
+    c.setFillColor(colors.HexColor(INK))
+    c.setFont("Helvetica-Bold", 21)
+    c.drawString(MARGIN, 718, page["title"])
+    top = paragraph(c, page["intro"], MARGIN, 691, BODY_WIDTH)
+    for side, x in [("left", MARGIN), ("right", MARGIN + COLUMN_WIDTH + 20)]:
+        y = top - 20
+        for heading, content in page[side]:
+            y = paragraph(c, heading, x, y, COLUMN_WIDTH, HEADING)
+            y = paragraph(c, content, x, y - 3, COLUMN_WIDTH)
+            y -= 10
+        if y < 46:
+            raise ValueError(f"Dictionary overlaps footer: {page['title']} {side}, bottom={y:.1f}")
+    footer(c, number)
+    c.showPage()
+
+
 def main():
     c = canvas.Canvas(str(OUT), pagesize=(WIDTH, HEIGHT), invariant=1)
     c.setTitle("Data science techniques: student field guide")
     c.setAuthor("Data science workshop")
-    c.setSubject("Nine illustrated techniques for the synthetic AI product analytics workshop")
+    c.setSubject("Illustrated techniques for the synthetic AI product analytics workshop")
     cover(c)
     for number, page in enumerate(PAGES, start=1):
         topic_page(c, page, number)
+    for i, page in enumerate(DICTIONARY, start=1):
+        dictionary_page(c, page, len(PAGES) + i + 1)
     c.save()
     print(f"Wrote {OUT}")
 
